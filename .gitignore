@@ -1,0 +1,61 @@
+# Build output — everyone regenerates these from their own device with scripts/.
+# This also keeps Meta/Oculus copyrighted binaries out of the repo (not redistributable).
+work/
+*.apk
+*.bcbundle
+*.img
+*.hasm
+*.odex
+# Signing keys. work/ already covers the project keystore; this is the safety net for
+# one placed elsewhere via KS=... — a committed key would let anyone sign for this build.
+*.jks
+*.keystore
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- Editors / IDEs ---------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+
+# --- OS-generated files -----------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.DocumentRevisions-V100
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+# Local downloads (firmware ZIP, Magisk apk, boot images) — never commit
+downloads/
+
+# Third-party build tools are downloaded by scripts/fetch_tools.sh, never vendored.
+tools/

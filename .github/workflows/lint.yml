@@ -1,0 +1,64 @@
+name: lint
+
+on: [push, pull_request]
+
+jobs:
+  shell:
+    # Run on both to keep the scripts genuinely cross-platform: a GNU-only flag
+    # passes on ubuntu and fails on macOS (and vice versa), which is exactly the
+    # class of bug this catches. WSL2 behaves like the ubuntu job.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: install shellcheck (macOS)
+        if: runner.os == 'macOS'
+        run: brew install shellcheck
+      # shellcheck is preinstalled on the ubuntu runner; it reads .shellcheckrc.
+      - name: shellcheck
+        run: shellcheck scripts/*.sh
+      # patch/system/*.sh ships INSIDE the system image and runs on the device as
+      # /system/bin/sh, so it is checked as POSIX sh, not bash.
+      - name: shellcheck (device scripts)
+        run: shellcheck -s sh patch/system/*.sh
+      - name: bash syntax
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+      - name: sh syntax (device scripts)
+        run: for f in patch/system/*.sh; do sh -n "$f"; done
+      - name: python compile
+        run: python3 -m py_compile scripts/*.py
+      - name: patch-logic selftest
+        run: python3 scripts/trust_flip.py --selftest
+      # Catches the rot no other check sees: links to renamed/deleted files, #anchors
+      # that match no heading (silent on GitHub), trailing whitespace and missing final
+      # newlines. All three have actually happened in this repo.
+      - name: docs and text hygiene
+        run: python3 scripts/check_docs.py
+      - name: lib.sh helpers work on this platform
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1091
+          source scripts/lib.sh
+          [ -n "$(md5_of README.md)" ] || { echo "md5_of failed"; exit 1; }
+          [ -n "$(sha256_of README.md)" ] || { echo "sha256_of failed"; exit 1; }
+          is_zip .github/workflows/lint.yml && { echo "is_zip false positive"; exit 1; }
+          echo "helpers OK on ${{ matrix.os }}"
+      # Invariant: lib.sh must neutralise PYTHONOPTIMIZE. Python DISCARDS assert
+      # statements when it is set, and every embedded patch step verifies its smali
+      # anchor with assert — so a hostile/inherited PYTHONOPTIMIZE would let patches
+      # "succeed" without applying, producing a silently broken image. Simulated here
+      # by setting it before sourcing lib.sh: the assert below must still fire.
+      - name: PYTHONOPTIMIZE guard in lib.sh
+        run: |
+          set -euo pipefail
+          export PYTHONOPTIMIZE=2
+          # shellcheck disable=SC1091
+          source scripts/lib.sh
+          if python3 -c 'assert False' 2>/dev/null; then
+            echo "lib.sh no longer neutralises PYTHONOPTIMIZE — patch anchors would be dropped"
+            exit 1
+          fi
+          echo "assert-based patch anchors stay armed"

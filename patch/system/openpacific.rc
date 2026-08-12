@@ -1,0 +1,22 @@
+# OpenPacific: run the Magisk setup on every boot, from the system image.
+#
+# This is what makes a factory reset survivable without a host: /data — and with it the
+# Magisk environment, the su policy and the manager app — is gone after a wipe, but this
+# file is part of the system partition and therefore still here on the first boot.
+#
+# seclabel is the important part. SELinux is enforcing on this device, and a service
+# started by init would otherwise land in a domain that may not talk to the Magisk daemon
+# or run `pm`. u:r:magisk:s0 is the domain Magisk creates for its own root shells (the
+# same one `su` reports), so the script runs with exactly the rights it needs.
+#
+# oneshot + disabled + an explicit start on boot-completed: the script needs the
+# PackageManager, which does not exist earlier in the boot.
+service openpacific_setup /system/bin/sh /system/etc/openpacific/magisk-setup.sh
+    user root
+    group root root
+    seclabel u:r:magisk:s0
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start openpacific_setup

@@ -1,0 +1,4 @@
+# Resolve `source` targets relative to each script's own directory, so the
+# `source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"` preambles are followed correctly.
+source-path=SCRIPTDIR
+external-sources=true
