@@ -110,8 +110,9 @@ for a in util_functions.sh boot_patch.sh stub.apk; do
   [ -f "$MAGISK_FILES/assets/$a" ] && mv "$MAGISK_FILES/assets/$a" "$MAGISK_FILES/$a"
 done
 rm -rf "${MAGISK_FILES:?}/lib" "${MAGISK_FILES:?}/assets"
-[ -f "$MAGISK_FILES/busybox" ] && [ -f "$MAGISK_FILES/util_functions.sh" ] \
-  || die "unexpected Magisk apk layout — busybox/util_functions.sh missing"
+if [ ! -f "$MAGISK_FILES/busybox" ] || [ ! -f "$MAGISK_FILES/util_functions.sh" ]; then
+  die "unexpected Magisk apk layout — busybox/util_functions.sh missing"
+fi
 
 cp "$SRC" "$OUT"
 

@@ -124,6 +124,10 @@ python3 scripts/trust_flip.py --selftest   # patch-logic self-check
 python3 scripts/check_docs.py              # dead links/anchors, whitespace, newlines
 ```
 
+Note that shellcheck findings differ between releases — 0.11 dropped SC2015, older
+runners still report it — so a green local run does not guarantee a green CI run. The
+workflow prints its version for exactly that reason.
+
 CI runs exactly these on **Linux and macOS** on every push, plus two guards that no
 local run covers: that the `lib.sh` helpers behave the same on either platform, and that
 `lib.sh` still neutralises `PYTHONOPTIMIZE` (`.github/workflows/lint.yml`).

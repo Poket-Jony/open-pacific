@@ -77,7 +77,13 @@ payload_dumper --partitions system,boot --out "$FW" "$FW/payload.bin" >/dev/null
 [ -f "$FW/boot.img" ] || die "boot.img not produced by payload_dumper"
 
 # 2) stock APKs straight out of system.img, to the paths the patch scripts expect.
-ext() { "$DBG" -R "dump $1 $2" "$SYS" >/dev/null 2>&1 && [ -s "$2" ] || die "not in image: $1"; echo "  $2"; }
+# debugfs reports a failed dump on stderr but still exits 0, so the size check below is
+# the real test — not the exit status.
+ext() {
+  "$DBG" -R "dump $1 $2" "$SYS" >/dev/null 2>&1 || true
+  [ -s "$2" ] || die "not in image: $1"
+  echo "  $2"
+}
 echo "[*] extracting stock APKs"
 ext /system/app/Horizon/Horizon.apk                      "$APKS/Horizon.apk"
 ext /system/app/VrHome/VrHome.apk                        "$APKS/VrHome.apk"

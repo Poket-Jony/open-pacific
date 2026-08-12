@@ -88,12 +88,20 @@ FSCK="${FSCK:-$(command -v e2fsck 2>/dev/null || find /opt/homebrew/Cellar/e2fsp
 set -e
 
 need_sdk() {
-  [ -n "$BT" ] && [ -x "$BT/apksigner" ] || die "Android build-tools not found — set ANDROID_HOME or BT=<sdk>/build-tools/<ver>"
-  [ -n "$AJ" ] && [ -f "$AJ" ] || die "android.jar not found — set AJ=<sdk>/platforms/android-<n>/android.jar"
+  if [ -z "$BT" ] || [ ! -x "$BT/apksigner" ]; then
+    die "Android build-tools not found — set ANDROID_HOME or BT=<sdk>/build-tools/<ver>"
+  fi
+  if [ -z "$AJ" ] || [ ! -f "$AJ" ]; then
+    die "android.jar not found — set AJ=<sdk>/platforms/android-<n>/android.jar"
+  fi
 }
 need_debugfs() {
-  [ -n "$DBG" ] && [ -x "$DBG" ] || die "debugfs not found (install e2fsprogs) — set DBG=<path>"
-  [ -n "$FSCK" ] && [ -x "$FSCK" ] || die "e2fsck not found (install e2fsprogs) — set FSCK=<path>"
+  if [ -z "$DBG" ] || [ ! -x "$DBG" ]; then
+    die "debugfs not found (install e2fsprogs) — set DBG=<path>"
+  fi
+  if [ -z "$FSCK" ] || [ ! -x "$FSCK" ]; then
+    die "e2fsck not found (install e2fsprogs) — set FSCK=<path>"
+  fi
 }
 
 # --- build tools (smali/baksmali) --------------------------------------------

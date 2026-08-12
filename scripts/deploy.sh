@@ -108,7 +108,9 @@ if [ -n "$missing" ]; then
 else
   echo "[=] already extracted: $STOCK_SYS"
 fi
-[ -s "$STOCK_SYS" ] && [ -s "$STOCK_BOOT_IMG" ] || die "stock system.img/boot.img missing"
+if [ ! -s "$STOCK_SYS" ] || [ ! -s "$STOCK_BOOT_IMG" ]; then
+  die "stock system.img/boot.img missing"
+fi
 
 # --------------------------------------------------- 2) build, host side (no device)
 # Reuse what is already built. Besides saving ~4 min, this is what makes the slot

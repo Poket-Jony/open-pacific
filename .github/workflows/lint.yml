@@ -18,8 +18,12 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install shellcheck
       # shellcheck is preinstalled on the ubuntu runner; it reads .shellcheckrc.
+      # Print the version: findings differ between shellcheck releases (0.11 dropped
+      # SC2015, older runners still report it), and a green local run is no proof.
       - name: shellcheck
-        run: shellcheck scripts/*.sh
+        run: |
+          shellcheck --version
+          shellcheck scripts/*.sh
       # patch/system/*.sh ships INSIDE the system image and runs on the device as
       # /system/bin/sh, so it is checked as POSIX sh, not bash.
       - name: shellcheck (device scripts)
