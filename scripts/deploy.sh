@@ -45,17 +45,19 @@ CUSTOM_SYS="$ROOT/work/ocms/system_final.img"
 #
 # On the first boot after a wipe that script reboots once (Zygisk is decided in
 # post-fs-data, before it can run), so allow for the device disappearing briefly.
+# App and busybox exist seconds before that reboot; only the exited service means done.
 await_magisk_setup() {
   local _i out path size
   echo "[*] waiting for the in-image Magisk setup (runs on boot)"
   for _i in $(seq 1 40); do
     adb wait-for-device >/dev/null 2>&1 || true
-    path="$(adb shell 'pm path com.topjohnwu.magisk' 2>/dev/null | tr -d '\r' | head -1 | sed 's/^package://')"
+    path="$(adb shell 'pm path com.topjohnwu.magisk' 2>/dev/null | tr -d '\r' | head -1 | sed 's/^package://')" || path=""
     if [ -n "$path" ]; then
-      size="$(adb shell "ls -l $path" 2>/dev/null | tr -d '\r' | tr -s ' ' | cut -d' ' -f5)"
+      size="$(adb shell "ls -l $path" 2>/dev/null | tr -d '\r' | tr -s ' ' | cut -d' ' -f5)" || size=""
       case "$size" in
         ''|*[!0-9]*) ;;
-        *) [ "$size" -ge 1000000 ] && adb shell 'test -f /data/adb/magisk/busybox' >/dev/null 2>&1 && break ;;
+        *) [ "$size" -ge 1000000 ] && adb shell 'test -f /data/adb/magisk/busybox' >/dev/null 2>&1 \
+             && [ "$(adb shell getprop init.svc.openpacific_setup 2>/dev/null | tr -d '\r')" = stopped ] && break ;;
       esac
     fi
     sleep 5
@@ -63,7 +65,7 @@ await_magisk_setup() {
   # Prove root from an UNPRIVILEGED shell: with root adbd this would pass regardless.
   adb unroot >/dev/null 2>&1 || true
   adb wait-for-device; sleep 2
-  out="$(adb shell 'su -c id' 2>&1 | tr -d '\r')"
+  out="$(adb shell 'su -c id' 2>&1 | tr -d '\r')" || true
   case "$out" in
     *"uid=0(root)"*) echo "[*] su works for the adb shell: $out" ;;
     *) echo "[!] su is not available yet ($out) — see docs/troubleshooting.md" >&2 ;;
